@@ -1,0 +1,86 @@
+name: Bug Report
+description: Report reproducible incorrect behavior in Blaze
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a problem. Please remove credentials, tokens,
+        private image contents, and other sensitive data before submitting.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      description: Which part of Blaze shows the problem?
+      options:
+        - HTTP API and daemon operation
+        - Sandbox lifecycle and recovery
+        - Checkpoints, hibernation, and templates
+        - Storage and artifact synchronization
+        - Firecracker and virtual machine networking
+        - Backend selection and policy
+        - Packaging and service operation
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the observed behavior and what you expected instead.
+      placeholder: |
+        Observed behavior:
+
+        Expected behavior:
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Provide the smallest reliable sequence that reproduces the problem.
+      placeholder: |
+        1. Start Blaze with ...
+        2. Send ...
+        3. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include the Blaze version or commit, operating system, architecture, kernel, and selected backend when known.
+      placeholder: |
+        Blaze version or commit:
+        Operating system and architecture:
+        Kernel:
+        Backend:
+    validations:
+      required: true
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostic output
+      description: Run `blazed daemon doctor --config <path>` when available and paste the redacted output.
+      render: shell
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs or configuration
+      description: Paste only the relevant, redacted log lines or configuration sections.
+      render: shell
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Add screenshots, API responses, or other information that helps explain the problem.
+

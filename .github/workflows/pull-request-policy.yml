@@ -1,0 +1,112 @@
+name: Pull request policy
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: policy-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  commits:
+    name: Commit policy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check commit subjects
+        uses: wagoid/commitlint-github-action@v6
+        with:
+          configFile: .github/commitlint.config.json
+
+      - name: Check sign-off trailers
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          failed=0
+          while read -r commit
+          do
+            if ! git show --quiet --format=%B "$commit" \
+              | grep -Eq '^Signed-off-by: .+ <[^>]+>$'
+            then
+              echo "::error::Commit $commit has no valid Signed-off-by trailer"
+              failed=1
+            fi
+          done < <(git rev-list --reverse "$BASE_SHA..$HEAD_SHA")
+          exit "$failed"
+
+  metadata:
+    name: Pull request guidance
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check title, branch, and issue reference
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const titlePattern = /^(feat|fix|refactor|perf|docs|chore|test|ci|build|style|revert)!?: [a-z].+/;
+            const branchPatterns = [
+              /^(feature|fix|hotfix)\/[a-z0-9][a-z0-9._-]*$/,
+              /^release\/v\d+\.\d+(?:\.\d+)?$/,
+              /^dependabot\/.+/,
+              /^renovate\/.+/,
+              /^revert-.+/,
+            ];
+            const issueReference = /\b(closes|fixes|resolves|close|fix|resolve)\s+#\d+/i;
+            const noIssue = /\bno-issue\s*:\s*\S+/i;
+
+            if (!titlePattern.test(pr.title) || pr.title.length > 50 || pr.title.endsWith('.')) {
+              core.warning(
+                'Use a PR title such as "feat: add snapshot backend": no component scope, ' +
+                'lowercase description, no trailing period, and at most 50 characters.'
+              );
+            }
+
+            if (!branchPatterns.some((pattern) => pattern.test(pr.head.ref))) {
+              core.warning(
+                `Branch "${pr.head.ref}" does not use feature/<description>, ` +
+                'fix/<description>, hotfix/<description>, or release/vX.Y.Z.'
+              );
+            }
+
+            const body = pr.body || '';
+            if (!issueReference.test(body) && !noIssue.test(body)) {
+              core.warning(
+                'Link an issue with "closes #123", or explain the exemption with ' +
+                '"no-issue: <reason>".'
+              );
+            }
+
+            core.notice('Title, branch, and issue-link findings are guidance only.');
+
+  required:
+    name: Pull request policy gate
+    if: ${{ always() }}
+    needs: [commits, metadata]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Verify required policy jobs
+        env:
+          COMMITS_RESULT: ${{ needs.commits.result }}
+          METADATA_RESULT: ${{ needs.metadata.result }}
+        run: |
+          if [ "$COMMITS_RESULT" != "success" ]; then
+            echo "Commit policy failed: $COMMITS_RESULT"
+            exit 1
+          fi
+          if [ "$METADATA_RESULT" != "success" ]; then
+            echo "Pull request guidance could not run: $METADATA_RESULT"
+            exit 1
+          fi

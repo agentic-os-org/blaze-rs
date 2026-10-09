@@ -1,0 +1,47 @@
+name: Question
+description: Ask for help using, configuring, or understanding Blaze
+title: "question: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please check the README and user guide first. Include enough context to
+        distinguish a usage question from a reproducible software defect.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Related area
+      description: Which part of Blaze is your question about?
+      options:
+        - Installation and packaging
+        - Configuration and policy
+        - HTTP API
+        - Sandbox lifecycle and recovery
+        - Checkpoints, hibernation, and templates
+        - Firecracker and virtual machine networking
+        - Storage
+        - Documentation
+        - Other
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: State the question and the result you are trying to achieve.
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: What have you tried?
+      description: List the commands, configuration, or documentation you have already tried and the result.
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include the Blaze version or commit, operating system, architecture, and backend when relevant.
+
