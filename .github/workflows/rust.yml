@@ -1,0 +1,105 @@
+name: Rust checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rust-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  format:
+    name: Rust format
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@1.88.0
+        with:
+          components: rustfmt
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+  clippy:
+    name: Rust lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@1.88.0
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Run Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+  test:
+    name: Rust tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@1.88.0
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Run workspace tests
+        run: cargo test --workspace --locked
+
+  rustdoc:
+    name: Rust documentation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      RUSTDOCFLAGS: -D warnings
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@1.88.0
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build API documentation
+        run: cargo doc --workspace --no-deps --locked
+
+  required:
+    name: Rust gate
+    if: ${{ always() }}
+    needs: [format, clippy, test, rustdoc]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Verify required Rust jobs
+        env:
+          FORMAT_RESULT: ${{ needs.format.result }}
+          CLIPPY_RESULT: ${{ needs.clippy.result }}
+          TEST_RESULT: ${{ needs.test.result }}
+          RUSTDOC_RESULT: ${{ needs.rustdoc.result }}
+        run: |
+          for result in \
+            "$FORMAT_RESULT" \
+            "$CLIPPY_RESULT" \
+            "$TEST_RESULT" \
+            "$RUSTDOC_RESULT"
+          do
+            if [ "$result" != "success" ]; then
+              echo "A required Rust job did not succeed: $result"
+              exit 1
+            fi
+          done

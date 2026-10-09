@@ -1,0 +1,6 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: Documentation / 文档
+    url: https://github.com/WeissonHan/blaze-rs/tree/main/docs
+    about: Check the Blaze documentation before opening an issue.

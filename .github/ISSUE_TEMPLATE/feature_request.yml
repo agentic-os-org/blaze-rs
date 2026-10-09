@@ -1,0 +1,64 @@
+name: Feature Request
+description: Propose a new Blaze capability or improvement
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the user or operator problem before proposing an implementation.
+        This helps reviewers evaluate the required behavior independently of a
+        particular code structure.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      description: Which part of Blaze would own this capability?
+      options:
+        - HTTP API and daemon operation
+        - Sandbox lifecycle and recovery
+        - Checkpoints, hibernation, and templates
+        - Storage and artifact synchronization
+        - Firecracker and virtual machine networking
+        - Backend selection and policy
+        - Packaging and service operation
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: Explain the current limitation and who is affected by it.
+    validations:
+      required: true
+
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired behavior
+      description: Describe the observable result you want, including API or configuration semantics when relevant.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Describe existing workarounds or alternative designs and their limitations.
+
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility considerations
+      description: Note expected effects on existing APIs, configuration, stored state, backends, or packaging.
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add examples, diagrams, or references that help explain the request.
+

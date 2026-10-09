@@ -1,0 +1,3 @@
+# Repository-wide review owner. Do not enable mandatory code-owner approval
+# until the repository has at least two maintainers who can review each other.
+* @WeissonHan
